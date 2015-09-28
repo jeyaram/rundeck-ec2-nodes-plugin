@@ -49,6 +49,10 @@ import java.util.regex.Pattern;
  */
 class InstanceToNodeMapper {
     static final Logger logger = Logger.getLogger(InstanceToNodeMapper.class);
+    public static final String SPACE_LEFT_BRACKET = " (";
+    public static final String RIGHT_BRACKET = ")";
+    public static final String COMMA_SPACE = ", ";
+    public static final String EMPTY_STRING = "";
     final AWSCredentials credentials;
     private ArrayList<String> filterParams;
     private String endpoint;
@@ -95,7 +99,7 @@ class InstanceToNodeMapper {
         final ArrayList<Filter> filters = buildFilters();
 
         final Future<DescribeInstancesResult> describeInstancesRequest = ec2.describeInstancesAsync(
-            new DescribeInstancesRequest().withFilters(filters));
+                new DescribeInstancesRequest().withFilters(filters));
 
         return new Future<INodeSet>() {
 
@@ -122,7 +126,7 @@ class InstanceToNodeMapper {
             }
 
             public INodeSet get(final long l, final TimeUnit timeUnit) throws InterruptedException, ExecutionException,
-                TimeoutException {
+                    TimeoutException {
                 DescribeInstancesResult describeInstancesResult = describeInstancesRequest.get(l, timeUnit);
 
                 final NodeSetImpl nodeSet = new NodeSetImpl();
@@ -257,7 +261,7 @@ class InstanceToNodeMapper {
             final String value = mapping.getProperty(key);
             final Matcher m = attribDefPat.matcher(key);
             if (m.matches() && (!mapping.containsKey(key + ".selector") || "".equals(mapping.getProperty(
-                key + ".selector")))) {
+                    key + ".selector")))) {
                 final String attrName = m.group(1);
                 if (null == node.getAttributes()) {
                     node.setAttributes(new HashMap<String, String>());
@@ -292,14 +296,29 @@ class InstanceToNodeMapper {
 //            System.err.println("Unable to determine hostname for instance: " + inst.getInstanceId());
 //            return null;
 //        }
-        String name = node.getNodename();
-        if (null == name || "".equals(name)) {
-            name = node.getHostname();
-        }
-        if (null == name || "".equals(name)) {
-            name = inst.getInstanceId();
-        }
-        node.setNodename(name);
+//        String name = node.getNodename();
+//        if (null == name || "".equals(name)) {
+//            name = node.getHostname();
+//        }
+//        if (null == name || "".equals(name)) {
+//            name = inst.getInstanceId();
+//        }
+//        node.setNodename(name);
+
+//        String name = node.getNodename();
+//        if (name == null) {
+//            name = EMPTY_STRING;
+//        }
+//
+//        StringBuilder uniqueName = new StringBuilder(name).
+//                append(SPACE_LEFT_BRACKET).
+//                append(inst.getPrivateIpAddress()).
+//                append(COMMA_SPACE).
+//                append(inst.getInstanceId()).
+//                append(RIGHT_BRACKET);
+//
+//        node.setNodename(uniqueName.toString());
+
 
         return node;
     }
@@ -309,21 +328,22 @@ class InstanceToNodeMapper {
      * a comma-separated list of selectors
      */
     public static String applySelector(final Instance inst, final String selector, final String defaultValue) throws
-        GeneratorException {
+            GeneratorException {
         return applySelector(inst, selector, defaultValue, false);
     }
 
     /**
      * Return the result of the selector applied to the instance, otherwise return the defaultValue. The selector can be
      * a comma-separated list of selectors.
-     * @param inst the instance
-     * @param selector the selector string
+     *
+     * @param inst         the instance
+     * @param selector     the selector string
      * @param defaultValue a default value to return if there is no result from the selector
-     * @param tagMerge if true, allow | separator to merge multiple values
+     * @param tagMerge     if true, allow | separator to merge multiple values
      */
     public static String applySelector(final Instance inst, final String selector, final String defaultValue,
                                        final boolean tagMerge) throws
-        GeneratorException {
+            GeneratorException {
 
         if (null != selector) {
             for (final String selPart : selector.split(",")) {
@@ -353,7 +373,7 @@ class InstanceToNodeMapper {
     }
 
     private static String applySingleSelector(final Instance inst, final String selector) throws
-        GeneratorException {
+            GeneratorException {
         if (null != selector && !"".equals(selector) && selector.startsWith("tags/")) {
             final String tag = selector.substring("tags/".length());
             final List<Tag> tags = inst.getTags();
